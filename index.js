@@ -1,1 +1,1 @@
-
+export { createEditor } from "./editor"
