@@ -1,3 +1,5 @@
+import { Path } from "slate";
+
 export const EmbModel = {
   decode: (emb) => {
     const selection = {};
@@ -58,6 +60,48 @@ export const EmbModel = {
     }
   },
   encode: (editor) => {
-    // TODO: implement
+    const { children, selection } = editor;
+
+    if (selection === null)
+      return children;
+
+    const { anchor, focus } = selection;
+    if (!Path.equals(anchor.path, focus.path)) {
+      const encoded = EmbModel._encodeChildren([...children], [...anchor.path], anchor.offset, '<anchor>');
+      return EmbModel._encodeChildren(encoded, [...focus.path], focus.offset, '<focus>');
+    }
+
+    if (anchor.offset < focus.offset) {
+      const encoded = EmbModel._encodeChildren([...children], [...anchor.path], anchor.offset, '<anchor>');
+      // adjust offset
+      return EmbModel._encodeChildren(encoded, [...focus.path], focus.offset + '<anchor>'.length, '<focus>');
+    } else if( anchor.offset > focus.offset ) {
+      const encoded = EmbModel._encodeChildren([...children], [...focus.path], focus.offset, '<focus>');
+      // adjust offset
+      return EmbModel._encodeChildren(encoded, [...anchor.path], anchor.offset + '<focus>'.length, '<anchor>');
+    } else {
+      const { path, offset } = anchor;
+
+      return EmbModel._encodeChildren([...children], [...path], offset, '<cursor>');
+    }
+  },
+  _encodeChildren: (children, path, offset, keyword) => {
+    const [i, ...nextPath] = path;
+    if (nextPath.length === 0) {
+      children[i] = EmbModel._encodeChild(children[i], offset, keyword)
+      return children;
+    }
+
+    const next = {...children[i]};
+    next["children"] = EmbModel._encodeChildren([...next.children], nextPath, offset, keyword);
+    children[i] = next;
+
+    return children;
+  },
+  _encodeChild: (ch, offset, keyword) => {
+    const node = {...ch};
+    const { text } = node;
+    node["text"] = text.slice(0, offset) + keyword + text.slice(offset, + text.length);
+    return node;
   }
 }
