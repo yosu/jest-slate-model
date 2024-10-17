@@ -10,12 +10,12 @@ For example, select `world` in the `hello world!` is:
 
 ```javascript
 const editor = {
-  children: [
+  children: [{
     type: "paragraph",
     children: [{ text: "hello world!" }],
-  ],
+  }],
   selection: {
-    anchor: { path: [0, 0], offset: 6 }
+    anchor: { path: [0, 0], offset: 6 },
     focus: { path: [0, 0], offset: 11 }
   }
 }
@@ -32,6 +32,15 @@ test("Test", () => {
     type: "paragraph",
     children: [{ text: "hello <anchor>world<focus>!" }],
   }]);
+
+  expect(editor.children).toEqual([{
+    type: "paragraph",
+    children: [{ text: "hello world!" }],
+  }]);
+  expect(editor.selection).toEqual({
+    anchor: { path: [0, 0], offset: 6 },
+    focus: { path: [0, 0], offset: 11 }
+  });
 
   expect(editor).toMatchEditorState([{
     type: "paragraph",
